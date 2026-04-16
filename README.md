@@ -31,8 +31,3 @@ The theoretical foundation of the robotic arm includes:
 * MATLAB (with Simscape Multibody Add-on)
 * ROS 2 / Gazebo
 * Python 3.x 
-
-### Running the MATLAB Simulation
-1. Clone this repository:
-   ```bash
-   git clone [https://github.com/yourusername/your-repo-name.git](https://github.com/yourusername/your-repo-name.git)
