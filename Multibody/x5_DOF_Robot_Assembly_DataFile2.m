@@ -1,0 +1,840 @@
+% Simscape(TM) Multibody(TM) version: 23.2
+
+% This is a model data file derived from a Simscape Multibody Import XML file using the smimport function.
+% The data in this file sets the block parameter values in an imported Simscape Multibody model.
+% For more information on this file, see the smimport function help page in the Simscape Multibody documentation.
+% You can modify numerical values, but avoid any other changes to this file.
+% Do not add code to this file. Do not edit the physical units shown in comments.
+
+%% ===== 1. SETUP & PARAMETERS =====
+clc; clear;
+%% ===== 1. INITIALIZATION & SETUP =====
+clc; clear; close all;
+
+% --- Configuration Parameters ---
+coord_A      = [0.0; 0; 0.437];      % Initial Position (x, y, z)
+coord_B      = [0.1337; 0; 0.2448];      % Target Position (x, y, z)
+run_duration = 5;                     % Total movement time (seconds)
+delta_t      = 0.01;                  % Sample rate
+init_guess   = deg2rad([180;0;250;70]); % Initial IK guess
+
+% --- Calculate Boundary Joint Angles (IK Solved ONLY here) ---
+disp("Calculating Inverse Kinematics for boundary points...");
+theta_start = compute_inverse_kin(init_guess, coord_A);
+theta_end   = compute_inverse_kin(theta_start, coord_B);
+
+% --- Generate the Joint Space Trajectory ---
+MotionProfile = generate_joint_path(theta_start, theta_end, run_duration, delta_t);
+
+disp("=== Joint Space Trajectory Generated ===");
+disp(["Total steps: " num2str(height(MotionProfile))]);
+
+%% ===== 2. SIMULINK EXPORT =====
+% Formatting data into Timeseries objects for Simulink import
+sim_time = MotionProfile.Time_S;
+
+% Create timeseries for the 4 active joints
+var_theta1 = timeseries(MotionProfile.J1_Rad, sim_time);
+var_theta2 = timeseries(MotionProfile.J2_Rad, sim_time);
+var_theta3 = timeseries(MotionProfile.J3_Rad, sim_time);
+var_theta4 = timeseries(MotionProfile.J4_Rad, sim_time);
+
+% Dummy variable for gripper/5th axis (required by some blocks)
+var_theta5 = timeseries(zeros(size(sim_time)), sim_time);
+
+disp(" ");
+disp(">> DATA READY FOR SIMULINK <<");
+disp("Created variables: var_theta1, var_theta2, var_theta3, var_theta4, var_theta5");
+
+%% ===== 3. CORE TRAJECTORY GENERATOR =====
+function TableData = generate_joint_path(q_start, q_final, T_total, dt)
+    time_steps = 0:dt:T_total;
+    num_steps = length(time_steps);
+    num_joints = length(q_start);
+    
+    % Pre-allocate matrix for speed
+    % Columns: [Time, x, y, z, th1, th2, th3, th4, dth1, dth2, dth3, dth4]
+    data_log = zeros(num_steps, 12);
+    
+    % --- Calculate Cubic Polynomial Coefficients ---
+    % Formula: q(t) = a0 + a1*t + a2*t^2 + a3*t^3
+    % Boundary conditions: Velocity starts and ends at 0.
+    a0 = q_start;
+    a1 = zeros(num_joints, 1);
+    a2 = (3 * (q_final - q_start)) / (T_total^2);
+    a3 = (-2 * (q_final - q_start)) / (T_total^3);
+    
+    for k = 1:num_steps
+        t_curr = time_steps(k);
+        
+        % 1. Calculate Joint Positions (Polynomial)
+        q_now = a0 + a1*t_curr + a2*(t_curr^2) + a3*(t_curr^3);
+        
+        % 2. Calculate Joint Velocities (Derivative of Polynomial)
+        q_vel = a1 + 2*a2*t_curr + 3*a3*(t_curr^2);
+        
+        % 3. Calculate Forward Kinematics (Just for visualization/checking)
+        xyz_now = compute_forward_kin(q_now);
+        
+        % Store: [Time, X, Y, Z, q1...q4, qdot1...qdot4]
+        data_log(k, :) = [t_curr, xyz_now', q_now', q_vel'];
+    end
+    
+    % Convert to Table with distinct names
+    TableData = array2table(data_log, ...
+        'VariableNames', {'Time_S', 'X_m', 'Y_m', 'Z_m', ...
+                          'J1_Rad', 'J2_Rad', 'J3_Rad', 'J4_Rad', ...
+                          'Vel1', 'Vel2', 'Vel3', 'Vel4'});
+end
+
+%% ===== 4. KINEMATICS LIBRARY =====
+
+% --- Forward Kinematics (FK) ---
+function pos_xyz = compute_forward_kin(angles)
+    % Robot Physical Dimensions
+    len1 = 0.06; len2 = 0.04355; len3 = 0.145; 
+    len4 = 0.1058; len5 = 0.034; len6 = 0.1003;
+    
+    % Denavit-Hartenberg Table
+    % [a, alpha, d, theta]
+    dh_params = [ 0,        pi/2,   len1+len2,  angles(1);
+                  len3,     pi,     0,          angles(2)+pi/2;
+                  len4+len5,pi,     0,          angles(3);
+                  len6,     0,      0,          angles(4)];
+                  
+    TransMat = eye(4);
+    
+    for i = 1:4
+        a_i = dh_params(i,1); 
+        alp = dh_params(i,2); 
+        d_i = dh_params(i,3); 
+        th_i = dh_params(i,4);
+        
+        T_link = [cos(th_i), -sin(th_i)*cos(alp), sin(th_i)*sin(alp), a_i*cos(th_i);
+                  sin(th_i),  cos(th_i)*cos(alp), -cos(th_i)*sin(alp), a_i*sin(th_i);
+                  0,          sin(alp),            cos(alp),             d_i;
+                  0,          0,                   0,                    1];
+        TransMat = TransMat * T_link;
+    end
+    
+    pos_xyz = TransMat(1:3, 4);
+end
+
+% --- Numerical Jacobian ---
+function JacMat = get_numerical_jacobian(angles)
+    perturb = 1e-6;
+    n_j = length(angles);
+    pos_nominal = compute_forward_kin(angles);
+    JacMat = zeros(3, n_j);
+    
+    for i = 1:n_j
+        angles_perturbed = angles;
+        angles_perturbed(i) = angles(i) + perturb;
+        pos_new = compute_forward_kin(angles_perturbed);
+        JacMat(:, i) = (pos_new - pos_nominal) / perturb;
+    end
+end
+
+% --- Inverse Kinematics (IK) ---
+function theta_sol = compute_inverse_kin(theta_guess, target_pos)
+    err_tol = 1e-4;
+    max_loops = 100;
+    learning_rate = 0.3;
+    
+    theta_sol = theta_guess;
+    
+    for iter = 1:max_loops
+        current_pos = compute_forward_kin(theta_sol);
+        error_vec = current_pos - target_pos;
+        
+        if norm(error_vec) < err_tol
+            break;
+        end
+        
+        J_matrix = get_numerical_jacobian(theta_sol);
+        
+        % Dampened Least Squares / Pseudoinverse update
+        theta_sol = theta_sol - learning_rate * pinv(J_matrix) * error_vec;
+    end
+end
+
+% 1. Define Parameters
+q_start = 4.6;       % Starting angle (rad)
+q_end   = 3.14;      % Target angle (rad)
+Tf      = 5;         % Duration (seconds)
+dt      = 0.1;       % Time step
+
+% 2. Generate Time Vector (Transposed to Column Vector)
+t_vec = (0:dt:Tf)';  
+
+% 3. Calculate Cubic Scaling Factor 's'
+% This creates a smooth curve from 0 to 1
+s = 3*(t_vec/Tf).^2 - 2*(t_vec/Tf).^3;
+
+% 4. Apply Scaling to Angle
+q4_data = q_start + s * (q_end - q_start);
+
+% 5. Create Timeseries Object
+t4 = timeseries(q4_data, t_vec);
+
+
+disp('>> theta4 timeseries created successfully.');
+
+
+
+% Define Parameters
+start_point = [0.0; 0; 0.47];   % Start (x, y, z)
+end_point   = [0.1337; 0; 0.2448];    % End (x, y, z)
+duration    = 5;                  % Total time (seconds)
+timestep    = 0.1;               % dt (Changed to 0.1 for smoother motion)
+q_guess     = deg2rad([180;0;250;70]); % Initial guess
+
+% Call the function
+trajectory_table = calculate_trajectory(start_point, end_point, duration, timestep, q_guess);
+
+% Display the result
+disp("=== Trajectory Calculation Complete ===");
+disp(["Generated " num2str(height(trajectory_table)) " points of data."]);
+
+%% ===== 2. PREPARE DATA FOR SIMULINK =====
+% This section formats the data specifically for your Simulink blocks.
+
+t_time = trajectory_table.Time;
+
+% Create Timeseries objects for the first 4 joints
+ts_q1 = timeseries(trajectory_table.q1, t_time);
+ts_q2 = timeseries(trajectory_table.q2, t_time);
+ts_q3 = timeseries(trajectory_table.q3, t_time);
+ts_q4 = timeseries(trajectory_table.q4, t_time);
+
+% Create dummy data for the 5th joint (Gripper/Rotation)
+% We set this to 0 because the IK solver only handles 4 joints.
+ts_q5 = timeseries(zeros(size(t_time)), t_time);
+
+disp("=== Data is ready for Simulink ===");
+disp("Variables created: ts_q1, ts_q2, ts_q3, ts_q4, ts_q5");
+% --- Configuration Parameters ---
+duration = 5;       % Total time per segment (seconds)
+timestep = 0.1;     % dt 
+
+% === PATH 1: A -> B ===
+start_point  = [-0.09; 0; 0.473];     % Start
+end_point    = [0.1337; 0; 0.2448];   % End
+
+% === PATH 2: B -> C ===
+start_point2 = end_point;             % Continuity: Starts where Path 1 ended
+end_point2   = [0.15; 0; 0.05];       % End
+
+% === PATH 3: C -> D ===
+start_point3 = end_point2;            % Continuity
+end_point3   = [0.15; 0; 0.20];       % Move up
+
+% === PATH 4: D -> A ===
+start_point4 = end_point3;            % Continuity
+end_point4   = [0; 0.15; 0.2];        % Return near start
+
+%% ===== 2. CALCULATE TRAJECTORIES 1-4 =====
+
+% --- 1. Calculate Trajectory Table 1 (A -> B) ---
+disp("Calculating Trajectory 1...");
+q_guess = deg2rad([0;0;70;270]);      % Initial guess for very start
+trajectory_table = calculate_trajectory(start_point, end_point, duration, timestep, q_guess);
+
+% --- 2. Calculate Trajectory Table 2 (B -> C) ---
+disp("Calculating Trajectory 2...");
+% Guess = Last angles of Table 1
+q_guess2 = [trajectory_table.q1(end); trajectory_table.q2(end); 
+            trajectory_table.q3(end); trajectory_table.q4(end)];
+trajectory_table2 = calculate_trajectory(start_point2, end_point2, duration, timestep, q_guess2);
+
+% --- 3. Calculate Trajectory Table 3 (C -> D) ---
+disp("Calculating Trajectory 3...");
+% Guess = Last angles of Table 2
+q_guess3 = [trajectory_table2.q1(end); trajectory_table2.q2(end); 
+            trajectory_table2.q3(end); trajectory_table2.q4(end)];
+trajectory_table3 = calculate_trajectory(start_point3, end_point3, duration, timestep, q_guess3);
+
+% --- 4. Calculate Trajectory Table 4 (D -> A) ---
+disp("Calculating Trajectory 4...");
+% Guess = Last angles of Table 3
+q_guess4 = [trajectory_table3.q1(end); trajectory_table3.q2(end); 
+            trajectory_table3.q3(end); trajectory_table3.q4(end)];
+trajectory_table4 = calculate_trajectory(start_point4, end_point4, duration, timestep, q_guess4);
+
+%% ===== 3. TIME SHIFTING (PATHS 1-4) =====
+% Shift Table 2
+t_end_1 = trajectory_table.Time(end);
+trajectory_table2.Time = trajectory_table2.Time + t_end_1 + timestep;
+
+% Shift Table 3
+t_end_2 = trajectory_table2.Time(end);
+trajectory_table3.Time = trajectory_table3.Time + t_end_2 + timestep;
+
+% Shift Table 4
+t_end_3 = trajectory_table3.Time(end);
+trajectory_table4.Time = trajectory_table4.Time + t_end_3 + timestep;
+
+%% ===== 4. CONCATENATE (MERGE 1-4) =====
+disp("Merging Tables 1-4...");
+FullTrajectory = [trajectory_table; trajectory_table2; trajectory_table3; trajectory_table4];
+
+%% ===== 5. ADD SEGMENT 5 (Q4 Independent Move: 4.6 -> 3.14) =====
+disp("Calculating Trajectory 5 (Q4 Independent Move)...");
+
+% 1. Get the state at the end of Path 4
+t_prev_end = FullTrajectory.Time(end);
+q1_hold = FullTrajectory.q1(end);
+q2_hold = FullTrajectory.q2(end);
+q3_hold = FullTrajectory.q3(end);
+
+% 2. Define Segment 5 Parameters
+Tf_5     = 5;          % Duration (secs)
+q4_start = 4.6;        % Requested Start
+q4_end   = 4.6+1.3;       % Requested End
+
+% 3. Generate Local Time Vector
+t_local  = (0:timestep:Tf_5)'; 
+N_5      = length(t_local);
+
+% 4. Cubic Scaling for Smooth Movement
+s    = 3*(t_local/Tf_5).^2 - 2*(t_local/Tf_5).^3;
+sdot = (6/Tf_5^2)*t_local - (6/Tf_5^3)*t_local.^2;
+
+% 5. Generate Joint Data
+% Q4 moves, others hold position
+q4_motion = q4_start + s * (q4_end - q4_start);
+q1_motion = repmat(q1_hold, N_5, 1);
+q2_motion = repmat(q2_hold, N_5, 1);
+q3_motion = repmat(q3_hold, N_5, 1);
+
+% 6. Generate Velocity Data (Optional placeholders)
+q4_vel     = sdot * (q4_end - q4_start);
+q_zero_vel = zeros(N_5, 1);
+
+% 7. Global Time Shift (So it starts after Path 4)
+t_global = t_local + t_prev_end + timestep;
+
+% 8. Create Table 5
+% We repeat the last X,Y,Z coordinates just to keep the table structure valid
+last_x = FullTrajectory.x(end);
+last_y = FullTrajectory.y(end);
+last_z = FullTrajectory.z(end);
+
+Table5 = table(t_global, ...
+               repmat(last_x, N_5, 1), repmat(last_y, N_5, 1), repmat(last_z, N_5, 1), ...
+               q1_motion, q2_motion, q3_motion, q4_motion, ...
+               q_zero_vel, q_zero_vel, q_zero_vel, q4_vel, ...
+               'VariableNames', FullTrajectory.Properties.VariableNames);
+
+% 9. APPEND TO MAIN TRAJECTORY
+disp("Merging Segment 5...");
+FullTrajectory = [FullTrajectory; Table5];
+disp(["Final Total Duration: " num2str(FullTrajectory.Time(end)) " seconds"]);
+
+%% ===== 6. SIMULINK EXPORT =====
+sim_time = FullTrajectory.Time;
+
+% Create timeseries for the 4 active joints
+theta1 = timeseries(FullTrajectory.q1, sim_time);
+theta2 = timeseries(FullTrajectory.q2, sim_time);
+theta3 = timeseries(FullTrajectory.q3, sim_time);
+theta4 = timeseries(FullTrajectory.q4, sim_time);
+
+% Dummy variable for gripper
+theta5 = timeseries(zeros(size(sim_time)), sim_time);
+
+disp(" ");
+disp(">> DATA READY FOR SIMULINK <<");
+disp("Variables created: theta1, theta2, theta3, theta4, theta5");
+
+writetable(FullTrajectory, 'Robot_Trajectory_Data.csv');
+disp(">> File saved as 'Robot_Trajectory_Data.csv' in current folder.");
+
+
+%% ===== 3. MAIN ALGORITHM =====
+function ResultTable = calculate_trajectory(X0, Xf, Tf, dt, q_init)
+    % Time vector
+    t_vec = 0:dt:Tf;
+    N = length(t_vec);
+    
+    % Pre-allocate Log
+    Log = zeros(N, 11); 
+    q_curr = q_init;
+
+    for k = 1:N
+        t = t_vec(k);
+
+        % --- Cubic Time Scaling ---
+        s = 3*(t/Tf)^2 - 2*(t/Tf)^3;
+        sdot = (6/Tf^2)*t - (6/Tf^3)*t^2;
+
+        % --- Task-space trajectory ---
+        Xd = X0 + s * (Xf - X0);   % Position
+        Vd = sdot * (Xf - X0);     % Linear Velocity
+
+        % --- Inverse Kinematics (Position) ---
+        q_curr = local_inverse_kinematics(q_curr, Xd);
+
+        % --- Jacobian Calculation ---
+        J = local_compute_jacobian(q_curr);
+
+        % --- Inverse Velocity Kinematics ---
+        qdot = pinv(J) * Vd;
+
+        % --- Store Data ---
+        Log(k,:) = [Xd', q_curr', qdot'];
+    end
+
+    % --- Convert to Table ---
+    ResultTable = array2table([t_vec', Log], ...
+        'VariableNames', {'Time', 'x', 'y', 'z', ...
+                          'q1', 'q2', 'q3', 'q4', ...
+                          'qdot1', 'qdot2', 'qdot3', 'qdot4'});
+end
+
+%% ===== 4. HELPER FUNCTIONS =====
+function X = local_forward_kinematics(q)
+    L1 = 0.06; L2 = 0.04355; L3 = 0.145; L4 = 0.1058; L5 = 0.034; L6 = 0.1003;
+    
+    DH = [ 0,     pi/2, L1+L2, q(1);
+           L3,    pi,   0,     q(2)+pi/2;
+           L4+L5, pi,   0,     q(3);
+           L6,    0,    0,     q(4)];
+            
+    T = eye(4);
+    for i = 1:4
+        a = DH(i,1); alpha = DH(i,2); d = DH(i,3); th = DH(i,4);
+        Ti = [cos(th), -sin(th)*cos(alpha), sin(th)*sin(alpha), a*cos(th);
+              sin(th),  cos(th)*cos(alpha), -cos(th)*sin(alpha), a*sin(th);
+              0,        sin(alpha),           cos(alpha),            d;
+              0,        0,                    0,                     1];
+        T = T*Ti;
+    end
+    X = T(1:3,4);
+end
+
+function J = local_compute_jacobian(q)
+    delta = 1e-6;
+    n = length(q);
+    X0 = local_forward_kinematics(q);
+    J = zeros(3,n);
+    for i=1:n
+        dq = zeros(n,1); 
+        dq(i) = delta;
+        J(:,i) = (local_forward_kinematics(q+dq) - X0)/delta;
+    end
+end
+
+function q = local_inverse_kinematics(q0, Xd)
+    tolerance = 1e-4;
+    max_iter  = 100;
+    alpha     = 0.3;
+    q = q0;
+    
+    for k = 1:max_iter
+        F = local_forward_kinematics(q) - Xd;
+        if norm(F) < tolerance
+            break;
+        end
+        J = local_compute_jacobian(q);
+        J_inv = pinv(J);
+        q = q - alpha * J_inv * F;
+    end
+end%%%VariableName:smiData
+
+
+
+
+
+%============= RigidTransform =============%
+
+%Initialize the RigidTransform structure array by filling in null values.
+smiData.RigidTransform(31).translation = [0.0 0.0 0.0];
+smiData.RigidTransform(31).angle = 0.0;
+smiData.RigidTransform(31).axis = [0.0 0.0 0.0];
+smiData.RigidTransform(31).ID = "";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(1).translation = [-0.010956254114603377 0.029992190398476299 0.014992441714184943];  % m
+smiData.RigidTransform(1).angle = 3.1415926535897931;  % rad
+smiData.RigidTransform(1).axis = [1 -4.868750899410934e-31 -4.3853809472693691e-15];
+smiData.RigidTransform(1).ID = "B[RotatingWasteLink-2:-:Arm_1-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(2).translation = [0.070000000000000034 0.0025000000000002746 1.3877787807814457e-17];  % m
+smiData.RigidTransform(2).angle = 2.0943951023931962;  % rad
+smiData.RigidTransform(2).axis = [0.57735026918962606 -0.57735026918962595 0.5773502691896254];
+smiData.RigidTransform(2).ID = "F[RotatingWasteLink-2:-:Arm_1-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(3).translation = [-0.070000000000000007 -0.035355339059327404 0];  % m
+smiData.RigidTransform(3).angle = 2.0943951023931953;  % rad
+smiData.RigidTransform(3).axis = [-0.57735026918962584 -0.57735026918962584 -0.57735026918962584];
+smiData.RigidTransform(3).ID = "B[Arm_1-1:-:Arm_2-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(4).translation = [-0.046461489483465998 -0.0042991010175530628 -0.026811526869617207];  % m
+smiData.RigidTransform(4).angle = 1.03673669914961e-14;  % rad
+smiData.RigidTransform(4).axis = [-0.99936877587949413 0.035525340211200324 -1.8403587847381554e-16];
+smiData.RigidTransform(4).ID = "F[Arm_1-1:-:Arm_2-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(5).translation = [0.056538510516534191 -0.0042991010175538989 -0.14592550264843204];  % m
+smiData.RigidTransform(5).angle = 2.0943951023931993;  % rad
+smiData.RigidTransform(5).axis = [0.57735026918962318 0.57735026918962706 0.57735026918962695];
+smiData.RigidTransform(5).ID = "B[Arm_2-1:-:Arm_3-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(6).translation = [-0.0023055609299223617 0.15053772958567579 -0.0056318323359050787];  % m
+smiData.RigidTransform(6).angle = 3.1415926535897829;  % rad
+smiData.RigidTransform(6).axis = [-7.1951008563724617e-17 7.4106912555278724e-17 -1];
+smiData.RigidTransform(6).ID = "F[Arm_2-1:-:Arm_3-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(7).translation = [-0.0023055352111781722 -0.0072775419076846412 0.024268167664094786];  % m
+smiData.RigidTransform(7).angle = 2.0943951023931953;  % rad
+smiData.RigidTransform(7).axis = [-0.57735026918962584 -0.57735026918962584 -0.57735026918962584];
+smiData.RigidTransform(7).ID = "B[Arm_3-1:-:Gripper-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(8).translation = [-0.037421031639325836 -0.00045636825944249393 0.063576978485936478];  % m
+smiData.RigidTransform(8).angle = 3.3371679465407785e-16;  % rad
+smiData.RigidTransform(8).axis = [0.74983785536509262 0.66162163708684618 8.2779944199211909e-17];
+smiData.RigidTransform(8).ID = "F[Arm_3-1:-:Gripper-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(9).translation = [-0.022896164824373955 0.0067265600567337179 0.049496699518295093];  % m
+smiData.RigidTransform(9).angle = 3.1415926535897896;  % rad
+smiData.RigidTransform(9).axis = [-1 -0 -0];
+smiData.RigidTransform(9).ID = "B[BaseLink-1:-:RotatingWasteLink-2]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(10).translation = [-0.010956254114603329 -0.013557809601523932 0.014992441714184686];  % m
+smiData.RigidTransform(10).angle = 2.0943951023931953;  % rad
+smiData.RigidTransform(10).axis = [0.57735026918962584 -0.57735026918962584 0.57735026918962584];
+smiData.RigidTransform(10).ID = "F[BaseLink-1:-:RotatingWasteLink-2]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(11).translation = [-0.010956254114603331 -0.013557809601523696 0.014992441714184686];  % m
+smiData.RigidTransform(11).angle = 0;  % rad
+smiData.RigidTransform(11).axis = [0 0 0];
+smiData.RigidTransform(11).ID = "AssemblyGround[RotatingWasteLink-2:Rotating Waste-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(12).translation = [-0.010956254114603792 0.019742190398476297 -0.032407558285815055];  % m
+smiData.RigidTransform(12).angle = 2.0943951023931904;  % rad
+smiData.RigidTransform(12).axis = [0.57735026918962418 -0.57735026918962418 -0.57735026918962917];
+smiData.RigidTransform(12).ID = "AssemblyGround[RotatingWasteLink-2:Servo MG996R-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(13).translation = [-0.022896164824373955 -0.018273439943266197 0.024496699518295095];  % m
+smiData.RigidTransform(13).angle = 0;  % rad
+smiData.RigidTransform(13).axis = [0 0 0];
+smiData.RigidTransform(13).ID = "AssemblyGround[BaseLink-1:Circular Base-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(14).translation = [-0.012646164824373959 0.0067265600567338844 0.0020966995182950948];  % m
+smiData.RigidTransform(14).angle = 1.5707963267949003;  % rad
+smiData.RigidTransform(14).axis = [1 0 0];
+smiData.RigidTransform(14).ID = "AssemblyGround[BaseLink-1:Servo MG996R-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(15).translation = [-0.037421031639325836 -0.00045636825944234127 0.056876978485936418];  % m
+smiData.RigidTransform(15).angle = 1.5707963267948966;  % rad
+smiData.RigidTransform(15).axis = [0 0 1];
+smiData.RigidTransform(15).ID = "AssemblyGround[Gripper-1:Base-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(16).translation = [-0.053555758979750734 0.049743631740557626 0.059826978485936405];  % m
+smiData.RigidTransform(16).angle = 2.6655257904888581;  % rad
+smiData.RigidTransform(16).axis = [-0.68597705894379157 -0.68597705894379146 -0.24263336375208586];
+smiData.RigidTransform(16).ID = "AssemblyGround[Gripper-1:Link-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(17).translation = [-0.04955575897975073 0.046915835832149422 0.084664010411982238];  % m
+smiData.RigidTransform(17).angle = 1.1917508316917051;  % rad
+smiData.RigidTransform(17).axis = [1 0 0];
+smiData.RigidTransform(17).ID = "AssemblyGround[Gripper-1:Grip-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(18).translation = [-0.051905758979750742 0.029743631740745236 0.040926978485935753];  % m
+smiData.RigidTransform(18).angle = 2.5294835689275992;  % rad
+smiData.RigidTransform(18).axis = [-0.67087813717661782 0.31598267376054201 -0.67087813717661871];
+smiData.RigidTransform(18).ID = "AssemblyGround[Gripper-1:Microservo horn-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(19).translation = [-0.021005758979750724 0.029743631740744292 0.046026978485936412];  % m
+smiData.RigidTransform(19).angle = 2.0943951023931957;  % rad
+smiData.RigidTransform(19).axis = [0.57735026918962573 -0.57735026918962573 0.57735026918962562];
+smiData.RigidTransform(19).ID = "AssemblyGround[Gripper-1:Servo Micro-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(20).translation = [-0.051555758979750725 0.037522217325673901 0.074279246777816388];  % m
+smiData.RigidTransform(20).angle = 1.6862155916680708;  % rad
+smiData.RigidTransform(20).axis = [0.32135688057509565 -0.32135688057509598 0.8907634425671539];
+smiData.RigidTransform(20).ID = "AssemblyGround[Gripper-1:Gear Arm 1-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(21).translation = [-0.051905758979750763 0.021178510782728033 0.046291385516531648];  % m
+smiData.RigidTransform(21).angle = 2.7485546625723347;  % rad
+smiData.RigidTransform(21).axis = [0.69295156979754791 -0.69295156979754924 0.19908853264371207];
+smiData.RigidTransform(21).ID = "AssemblyGround[Gripper-1:Gear Arm 2-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(22).translation = [-0.041055758979750723 0.046876253614055396 0.023945876702574941];  % m
+smiData.RigidTransform(22).angle = 3.1415926535897931;  % rad
+smiData.RigidTransform(22).axis = [-1.4643144908186681e-16 -0.83581572525508618 0.54901008498598125];
+smiData.RigidTransform(22).ID = "AssemblyGround[Gripper-1:Grip-2]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(23).translation = [-0.041055758979750723 0.073641181047058968 0.030080912114543459];  % m
+smiData.RigidTransform(23).angle = 1.6856040266847538;  % rad
+smiData.RigidTransform(23).axis = [-0.32059547542984818 -0.32059547542984829 -0.89131200051823567];
+smiData.RigidTransform(23).ID = "AssemblyGround[Gripper-1:Link-4]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(24).translation = [-0.037055758979750719 0.049743631740557681 0.059826978485936419];  % m
+smiData.RigidTransform(24).angle = 1.6822224593735964;  % rad
+smiData.RigidTransform(24).axis = [0.31633607653491608 -0.31633607653491608 0.89435058750189877];
+smiData.RigidTransform(24).ID = "AssemblyGround[Gripper-1:Link-3]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(25).translation = [-0.049555758979750723 0.049743631740559013 0.049826978485935043];  % m
+smiData.RigidTransform(25).angle = 1.6856040266847538;  % rad
+smiData.RigidTransform(25).axis = [-0.32059547542984834 0.32059547542984823 0.89131200051823567];
+smiData.RigidTransform(25).ID = "AssemblyGround[Gripper-1:Link-2]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(26).translation = [0.027638510516534265 -0.0042991418137071028 -0.0032726321026566724];  % m
+smiData.RigidTransform(26).angle = 3.139873280503874;  % rad
+smiData.RigidTransform(26).axis = [0.70710651988886253 0.70710651988886752 -0.00085968675474654838];
+smiData.RigidTransform(26).ID = "AssemblyGround[Arm_2-1:Servo Micro-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(27).translation = [0.029538510516534167 -0.016928803425112663 -0.004085890217849629];  % m
+smiData.RigidTransform(27).angle = 0;  % rad
+smiData.RigidTransform(27).axis = [0 0 0];
+smiData.RigidTransform(27).ID = "AssemblyGround[Arm_2-1:Arm 2-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(28).translation = [-0.036211489483466031 -0.0042991010175531582 -0.038106187810289814];  % m
+smiData.RigidTransform(28).angle = 1.5707963267948857;  % rad
+smiData.RigidTransform(28).axis = [1 0 0];
+smiData.RigidTransform(28).ID = "AssemblyGround[Arm_2-1:Servo MG996R-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(29).translation = [-0.0023055352111781731 0.022622458092315355 0.019168167664094793];  % m
+smiData.RigidTransform(29).angle = 3.1415926535897931;  % rad
+smiData.RigidTransform(29).axis = [-0.70710678118654746 0 0.70710678118654757];
+smiData.RigidTransform(29).ID = "AssemblyGround[Arm_3-1:Servo Micro-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(30).translation = [-0.0023055352111782702 0.0078724580923153556 -0.0041318323359054165];  % m
+smiData.RigidTransform(30).angle = 0;  % rad
+smiData.RigidTransform(30).axis = [0 0 0];
+smiData.RigidTransform(30).ID = "AssemblyGround[Arm_3-1:Arm 3-1]";
+
+%Translation Method - Cartesian
+%Rotation Method - Arbitrary Axis
+smiData.RigidTransform(31).translation = [0.0065601733872995248 0.019385953644928119 -0.033616875914901909];  % m
+smiData.RigidTransform(31).angle = 0;  % rad
+smiData.RigidTransform(31).axis = [0 0 0];
+smiData.RigidTransform(31).ID = "RootGround[BaseLink-1]";
+
+
+%============= Solid =============%
+%Center of Mass (CoM) %Moments of Inertia (MoI) %Product of Inertia (PoI)
+
+%Initialize the Solid structure array by filling in null values.
+smiData.Solid(13).mass = 0.0;
+smiData.Solid(13).CoM = [0.0 0.0 0.0];
+smiData.Solid(13).MoI = [0.0 0.0 0.0];
+smiData.Solid(13).PoI = [0.0 0.0 0.0];
+smiData.Solid(13).color = [0.0 0.0 0.0];
+smiData.Solid(13).opacity = 0.0;
+smiData.Solid(13).ID = "";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(1).mass = 0.089721318791525201;  % kg
+smiData.Solid(1).CoM = [-0.000103814223568812 19.422934781166781 -7.0575678960388881];  % mm
+smiData.Solid(1).MoI = [66.937092739878324 70.695447549394487 77.272872070026267];  % kg*mm^2
+smiData.Solid(1).PoI = [7.9679090392684797 -0.00027714050222831313 6.6609670610196347e-05];  % kg*mm^2
+smiData.Solid(1).color = [1 1 1];
+smiData.Solid(1).opacity = 1;
+smiData.Solid(1).ID = "Rotating Waste*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(2).mass = 0.033876630295594158;  % kg
+smiData.Solid(2).CoM = [-0.49032191241283091 20.358074512903947 -1.2918440699258237e-06];  % mm
+smiData.Solid(2).MoI = [5.8478860963115435 6.0267252145453636 9.5874430627169769];  % kg*mm^2
+smiData.Solid(2).PoI = [6.4718830445865982e-07 1.5672389689302076e-07 0.27277211248685718];  % kg*mm^2
+smiData.Solid(2).color = [0.25098039215686274 0.25098039215686274 0.25098039215686274];
+smiData.Solid(2).opacity = 1;
+smiData.Solid(2).ID = "Servo MG996R*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(3).mass = 0.093991528357273896;  % kg
+smiData.Solid(3).CoM = [0.88930748628568013 25.00000015179576 -2.5740826422795617];  % mm
+smiData.Solid(3).MoI = [114.11747096047216 124.42725795815227 197.76858898421952];  % kg*mm^2
+smiData.Solid(3).PoI = [1.9115339056411537e-07 -1.3528430253361192 1.9770438996363348e-07];  % kg*mm^2
+smiData.Solid(3).color = [1 1 1];
+smiData.Solid(3).opacity = 1;
+smiData.Solid(3).ID = "Circular Base*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(4).mass = 0.1379847018478447;  % kg
+smiData.Solid(4).CoM = [0.0036427036336024949 10.308467305813647 -0.00032059335197869905];  % mm
+smiData.Solid(4).MoI = [30.835119656497056 431.68332374126783 412.92742194235387];  % kg*mm^2
+smiData.Solid(4).PoI = [0.00035028179109484407 -1.1849157106677841e-05 -0.0033681728276682039];  % kg*mm^2
+smiData.Solid(4).color = [1 1 1];
+smiData.Solid(4).opacity = 1;
+smiData.Solid(4).ID = "Arm_1*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(5).mass = 0.015576159256236224;  % kg
+smiData.Solid(5).CoM = [24.485056579738181 4.7924503379828085 -1.6045282512684211];  % mm
+smiData.Solid(5).MoI = [2.5842316653018664 6.2479155961497739 4.8787428545940354];  % kg*mm^2
+smiData.Solid(5).PoI = [0.010017148093103258 0.54612472189822581 -0.83085614601083813];  % kg*mm^2
+smiData.Solid(5).color = [1 1 1];
+smiData.Solid(5).opacity = 1;
+smiData.Solid(5).ID = "Base*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(6).mass = 0.00079876241318469095;  % kg
+smiData.Solid(6).CoM = [15.500000000000007 2 0];  % mm
+smiData.Solid(6).MoI = [0.0036325042236300992 0.10442422565960369 0.10292175453779942];  % kg*mm^2
+smiData.Solid(6).PoI = [0 0 0];  % kg*mm^2
+smiData.Solid(6).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
+smiData.Solid(6).opacity = 1;
+smiData.Solid(6).ID = "Link*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(7).mass = 0.0053974701398930717;  % kg
+smiData.Solid(7).CoM = [4.2500225915138357 9.5131476517421962 -31.889976021591902];  % mm
+smiData.Solid(7).MoI = [1.7139108532223843 1.5958276983903421 0.18307767030588401];  % kg*mm^2
+smiData.Solid(7).PoI = [0.37341188434821881 6.5121955707659532e-06 1.2431071757242153e-05];  % kg*mm^2
+smiData.Solid(7).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
+smiData.Solid(7).opacity = 1;
+smiData.Solid(7).ID = "Grip*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(8).mass = 0.0017572412778761883;  % kg
+smiData.Solid(8).CoM = [-3.9398950097444714 0 1.808908813594637];  % mm
+smiData.Solid(8).MoI = [0.009502192791113688 0.054669651751985113 0.057671077946502156];  % kg*mm^2
+smiData.Solid(8).PoI = [0 -0.0056003557135239669 0];  % kg*mm^2
+smiData.Solid(8).color = [1 1 1];
+smiData.Solid(8).opacity = 1;
+smiData.Solid(8).ID = "Microservo horn*:*?? ?????????";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(9).mass = 0.0071285815431194289;  % kg
+smiData.Solid(9).CoM = [-0.42843487706856731 12.510643062129502 0];  % mm
+smiData.Solid(9).MoI = [0.4581464493976436 0.42765081401936345 0.70781861394704571];  % kg*mm^2
+smiData.Solid(9).PoI = [0 0 0.035781849855651131];  % kg*mm^2
+smiData.Solid(9).color = [0.12156862745098039 0.25490196078431371 1];
+smiData.Solid(9).opacity = 1;
+smiData.Solid(9).ID = "Servo Micro*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(10).mass = 0.0039624199269446122;  % kg
+smiData.Solid(10).CoM = [-4.5275913705687696 1 -0.60196930727362208];  % mm
+smiData.Solid(10).MoI = [0.14167320068202865 0.67085950123994897 0.5529608201195878];  % kg*mm^2
+smiData.Solid(10).PoI = [0 -0.013886112733173262 0];  % kg*mm^2
+smiData.Solid(10).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
+smiData.Solid(10).opacity = 1;
+smiData.Solid(10).ID = "Gear Arm 1*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(11).mass = 0.0028244899707033041;  % kg
+smiData.Solid(11).CoM = [-17.370546750743475 1.7437179323548235 0.40231023320767639];  % mm
+smiData.Solid(11).MoI = [0.10249998648924344 0.54141333132696878 0.44993490963466681];  % kg*mm^2
+smiData.Solid(11).PoI = [0.0021040568313833354 0.058922340817105484 -0.012935612981905613];  % kg*mm^2
+smiData.Solid(11).color = [0.792156862745098 0.81960784313725488 0.93333333333333335];
+smiData.Solid(11).opacity = 1;
+smiData.Solid(11).ID = "Gear Arm 2*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(12).mass = 0.080335404973810018;  % kg
+smiData.Solid(12).CoM = [-44.301030823737541 12.730203302188647 2.0508592474980816];  % mm
+smiData.Solid(12).MoI = [21.25745814669855 104.52010849934938 117.2265982816088];  % kg*mm^2
+smiData.Solid(12).PoI = [0.010477131920287354 0.81701872534565867 -0.25423125853984885];  % kg*mm^2
+smiData.Solid(12).color = [1 1 1];
+smiData.Solid(12).opacity = 1;
+smiData.Solid(12).ID = "Arm 2*:*Default";
+
+%Inertia Type - Custom
+%Visual Properties - Simple
+smiData.Solid(13).mass = 0.020451254914597893;  % kg
+smiData.Solid(13).CoM = [0.037358468133722789 -4.1032325236279963 18.449183285021832];  % mm
+smiData.Solid(13).MoI = [5.0954754177574983 6.0743432546488227 2.9612438436111672];  % kg*mm^2
+smiData.Solid(13).PoI = [0.39169160342408993 0.011228103814175669 -0.0030202973543223162];  % kg*mm^2
+smiData.Solid(13).color = [1 1 1];
+smiData.Solid(13).opacity = 1;
+smiData.Solid(13).ID = "Arm 3*:*Default";
+
+
+%============= Joint =============%
+%X Revolute Primitive (Rx) %Y Revolute Primitive (Ry) %Z Revolute Primitive (Rz)
+%X Prismatic Primitive (Px) %Y Prismatic Primitive (Py) %Z Prismatic Primitive (Pz) %Spherical Primitive (S)
+%Constant Velocity Primitive (CV) %Lead Screw Primitive (LS)
+%Position Target (Pos)
+
+%Initialize the RevoluteJoint structure array by filling in null values.
+smiData.RevoluteJoint(4).Rz.Pos = 0.0;
+smiData.RevoluteJoint(4).ID = "";
+
+smiData.RevoluteJoint(1).Rz.Pos = 179.83977895785137;  % deg
+smiData.RevoluteJoint(1).ID = "[RotatingWasteLink-2:-:Arm_1-1]";
+
+smiData.RevoluteJoint(2).Rz.Pos = -89.399648290834108;  % deg
+smiData.RevoluteJoint(2).ID = "[Arm_1-1:-:Arm_2-1]";
+
+smiData.RevoluteJoint(3).Rz.Pos = -89.999999999999957;  % deg
+smiData.RevoluteJoint(3).ID = "[Arm_3-1:-:Gripper-1]";
+
+smiData.RevoluteJoint(4).Rz.Pos = 89.74525010678957;  % deg
+smiData.RevoluteJoint(4).ID = "[BaseLink-1:-:RotatingWasteLink-2]";
+
+

@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<SimscapeMultibodyImportXML version="2.0" xmlns="urn:mathworks:SimscapeMultibody:import" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Created by="" on="10/18/25||19:23:32" using="Simscape Multibody Link Version 7.4" from="SolidWorks 31.0.1"/>
+<ModelUnits mass="kilogram" length="meter"/>
+<DataUnits mass="kilogram" length="meter"/>
+<RootAssembly name="5_DOF_Robot_Assembly" uid="5_DOF_Robot_Assembly" version="2894">
+<AssemblyFile name="5_DOF_Robot_Assembly.SLDASM" type="SolidWorks Assembly"/>
+<InstanceTree>
+<Instance name="RotatingWasteLink-2" uid="RotatingWasteLink-2" entityUid="RotatingWasteLink" rigid="true">
+<Transform>
+<Rotation>0.9999901155605514 0 0.0044462097561375228 0.0044462097561375228 -3.4914813204992451e-15 -0.9999901155605514 0 1 -3.4914468238428481e-15</Rotation>
+<Translation>-0.0054465051595194141 0.04115352102789923 0.029437633204917171</Translation>
+</Transform>
+<Instance name="Rotating Waste-1" uid="Rotating Waste-1" grounded="true" entityUid="Rotating Waste*:*Default">
+<Transform>
+<Rotation>1 0 0 0 1 0 0 0 1</Rotation>
+<Translation>-0.010956254114603331 -0.013557809601523696 0.014992441714184686</Translation>
+</Transform>
+</Instance>
+<Instance name="Servo MG996R-1" uid="Servo MG996R-1" entityUid="Servo MG996R*:*Default">
+<Transform>
+<Rotation>0 9.0309704159352577e-15 -1.0000000000000002 -1 0 0 0 1.0000000000000002 9.0309704159352577e-15</Rotation>
+<Translation>-0.010956254114603792 0.019742190398476297 -0.032407558285815055</Translation>
+</Transform>
+</Instance>
+</Instance>
+<Instance name="BaseLink-1" uid="BaseLink-1" grounded="true" entityUid="BaseLink" rigid="true">
+<Transform>
+<Rotation>1 0 0 0 1 0 0 0 1</Rotation>
+<Translation>0.0065601733872995248 0.019385953644928119 -0.033616875914901909</Translation>
+</Transform>
+<Instance name="Circular Base-1" uid="Circular Base-1" grounded="true" entityUid="Circular Base*:*Default">
+<Transform>
+<Rotation>1 0 0 0 1 0 0 0 1</Rotation>
+<Translation>-0.022896164824373955 -0.018273439943266197 0.024496699518295095</Translation>
+</Transform>
+</Instance>
+<Instance name="Servo MG996R-1" uid="Servo MG996R-1" entityUid="Servo MG996R*:*Default">
+<Transform>
+<Rotation>1 0 0 0 -3.4914813388431334e-15 -1 0 1 -3.4914813388431334e-15</Rotation>
+<Translation>-0.012646164824373959 0.0067265600567338844 0.0020966995182950948</Translation>
+</Transform>
+</Instance>
+</Instance>
+<Instance name="Arm_1-1" uid="Arm_1-1" entityUid="Arm_1*:*Default">
+<Transform>
+<Rotation>0.0027963534312992842 0.0044462097561473596 -0.99998620571800501 1.2433296807517245e-05 -0.99999011556055117 -0.0044461923719954412 -0.99999609011880664 -3.4688405629672349e-15 -0.0027963810719586549</Rotation>
+<Translation>-0.016542851701655776 0.028611618659786536 0.12942954991170991</Translation>
+</Transform>
+</Instance>
+<Instance name="Gripper-1" uid="Gripper-1" entityUid="Gripper" rigid="true">
+<Transform>
+<Rotation>-0.99990201156717395 -0.013273977652679361 -0.0044462097561469684 -0.0044458180234399521 -5.9019472320254277e-05 0.99999011556055095 -0.013274108859804637 0.99991189513575551 3.6343187493950814e-15</Rotation>
+<Translation>-0.055628551581686891 -0.038485762921506662 0.33227716462851392</Translation>
+</Transform>
+<Instance name="Base-1" uid="Base-1" grounded="true" entityUid="Base*:*Default">
+<Transform>
+<Rotation>1.3010426069826053e-16 -1.0000000000000002 0 1 1.1622647289044608e-16 0 0 0 0.99999999999999978</Rotation>
+<Translation>-0.037421031639325836 -0.00045636825944234127 0.056876978485936418</Translation>
+</Transform>
+</Instance>
+<Instance name="Link-1" uid="Link-1" entityUid="Link*:*Default">
+<Transform>
+<Rotation>0 1 0 0.77760859621348166 -1.2342193375574926e-16 0.62874865494480248 0.62874865494480248 0 -0.77760859621348166</Rotation>
+<Translation>-0.053555758979750734 0.049743631740557626 0.059826978485936405</Translation>
+</Transform>
+</Instance>
+<Instance name="Grip-1" uid="Grip-1" entityUid="Grip*:*Default">
+<Transform>
+<Rotation>1 0 0 0 0.37003388563640788 -0.92901825788346148 0 0.92901825788346148 0.37003388563640788</Rotation>
+<Translation>-0.04955575897975073 0.046915835832149422 0.084664010411982238</Translation>
+</Transform>
+</Instance>
+<Instance name="Microservo horn-1" uid="Microservo horn-1" entityUid="Microservo horn*:*?? ?????????">
+<Transform>
+<Rotation>-1.7433970933566911e-15 -1.1639994523804376e-15 1 -0.77096630122592369 -0.63687593954711308 -2.0781987242202149e-15 0.63687593954711319 -0.77096630122592358 2.1717034911374457e-16</Rotation>
+<Translation>-0.051905758979750742 0.029743631740745236 0.040926978485935753</Translation>
+</Transform>
+</Instance>
+<Instance name="Servo Micro-1" uid="Servo Micro-1" entityUid="Servo Micro*:*Default">
+<Transform>
+<Rotation>-1.4027379142962862e-16 -1.0000000000000002 -2.7061686225238191e-16 -1.2571105113919525e-16 2.5673907444456745e-16 -1 0.99999999999999978 -1.4257723964674848e-16 -1.2570327718855954e-16</Rotation>
+<Translation>-0.021005758979750724 0.029743631740744292 0.046026978485936412</Translation>
+</Transform>
+</Instance>
+<Instance name="Gear Arm 1-1" uid="Gear Arm 1-1" entityUid="Gear Arm 1*:*Default">
+<Transform>
+<Rotation>-2.3939183968479938e-16 -1 -1.7428465465778885e-16 0.76967365233108309 0 -0.63843752153780153 0.63843752153780153 -2.8697903950045995e-16 0.76967365233108309</Rotation>
+<Translation>-0.051555758979750725 0.037522217325673901 0.074279246777816388</Translation>
+</Transform>
+</Instance>
+<Instance name="Gear Arm 2-1" uid="Gear Arm 2-1" entityUid="Gear Arm 2*:*Default">
+<Transform>
+<Rotation>-1.7277845820728999e-15 -1 -9.3241386833753381e-16 -0.84749956894846734 1.951563910473908e-15 -0.53079608196760664 0.53079608196760653 -1.2869945183892786e-16 -0.84749956894846723</Rotation>
+<Translation>-0.051905758979750763 0.021178510782728033 0.046291385516531648</Translation>
+</Transform>
+</Instance>
+<Instance name="Grip-2" uid="Grip-2" entityUid="Grip*:*Default">
+<Transform>
+<Rotation>-1 2.3281975681348753e-16 -1.7899212957347591e-16 2.567390744445674e-16 0.39717585316737131 -0.91774252470982887 -1.4257723964674845e-16 -0.91774252470982887 -0.39717585316737131</Rotation>
+<Translation>-0.041055758979750723 0.046876253614055396 0.023945876702574941</Translation>
+</Transform>
+</Instance>
+<Instance name="Link-4" uid="Link-4" entityUid="Link*:*Default">
+<Transform>
+<Rotation>0 1.0000000000000002 0 -0.7708886873064511 -1.1796119636642288e-16 0.63696988294811607 0.63696988294811585 0 0.7708886873064511</Rotation>
+<Translation>-0.041055758979750723 0.073641181047058968 0.030080912114543459</Translation>
+</Transform>
+</Instance>
+<Instance name="Link-3" uid="Link-3" entityUid="Link*:*Default">
+<Transform>
+<Rotation>0 -1.0000000000000002 0 0.77760859621348166 1.1969591984239969e-16 -0.62874865494480259 0.62874865494480248 0 0.77760859621348155</Rotation>
+<Translation>-0.037055758979750719 0.049743631740557681 0.059826978485936419</Translation>
+</Transform>
+</Instance>
+<Instance name="Link-2" uid="Link-2" entityUid="Link*:*Default">
+<Transform>
+<Rotation>0 -1.0000000000000002 0 0.7708886873064511 1.1449174941446927e-16 0.63696988294811618 -0.63696988294811596 0 0.77088868730645099</Rotation>
+<Translation>-0.049555758979750723 0.049743631740559013 0.049826978485935043</Translation>
+</Transform>
+</Instance>
+</Instance>
+<Instance name="Arm_2-1" uid="Arm_2-1" entityUid="Arm_2" rigid="true">
+<Transform>
+<Rotation>-0.013273977652672589 -0.99990201156717384 0.0044462097561576404 -5.9019472320203292e-05 -0.0044458180234506267 -0.99999011556055117 0.99991189513575573 -0.013274108859797866 -3.4717730215707903e-15</Rotation>
+<Translation>-0.021691992551454209 0.037132620914544945 0.24582960548536259</Translation>
+</Transform>
+<Instance name="Servo Micro-1" uid="Servo Micro-1" entityUid="Servo Micro*:*Default">
+<Transform>
+<Rotation>-6.9822619908066486e-15 1 0 0.99999704375691967 6.9822826628646102e-15 -0.0024315586403026155 -0.0024315586403026155 0 -0.99999704375691967</Rotation>
+<Translation>0.027638510516534265 -0.0042991418137071028 -0.0032726321026566724</Translation>
+</Transform>
+</Instance>
+<Instance name="Arm 2-1" uid="Arm 2-1" grounded="true" entityUid="Arm 2*:*Default">
+<Transform>
+<Rotation>1 0 0 0 1 0 0 0 1</Rotation>
+<Translation>0.029538510516534167 -0.016928803425112663 -0.004085890217849629</Translation>
+</Transform>
+</Instance>
+<Instance name="Servo MG996R-1" uid="Servo MG996R-1" entityUid="Servo MG996R*:*Default">
+<Transform>
+<Rotation>1 0 0 0 1.0547499612588463e-14 -1 0 1 1.0547499612588463e-14</Rotation>
+<Translation>-0.036211489483466031 -0.0042991010175531582 -0.038106187810289814</Translation>
+</Transform>
+</Instance>
+</Instance>
+<Instance name="Arm_3-1" uid="Arm_3-1" entityUid="Arm_3" rigid="true">
+<Transform>
+<Rotation>0.99990201156717395 -0.0044462097561470864 -0.013273977652679628 0.0044458180234400718 0.99999011556055106 -5.901947232025038e-05 0.013274108859804909 3.6276625421053504e-15 0.99991189513575551</Rotation>
+<Translation>-0.015892718597729463 0.032546133430874848 0.30808214182985788</Translation>
+</Transform>
+<Instance name="Servo Micro-1" uid="Servo Micro-1" entityUid="Servo Micro*:*Default">
+<Transform>
+<Rotation>0 0 -1 0 -1 0 -1 0 0</Rotation>
+<Translation>-0.0023055352111781731 0.022622458092315355 0.019168167664094793</Translation>
+</Transform>
+</Instance>
+<Instance name="Arm 3-1" uid="Arm 3-1" grounded="true" entityUid="Arm 3*:*Default">
+<Transform>
+<Rotation>1 0 0 0 1 0 0 0 1</Rotation>
+<Translation>-0.0023055352111782702 0.0078724580923153556 -0.0041318323359054165</Translation>
+</Transform>
+</Instance>
+</Instance>
+</InstanceTree>
+<Constraints>
+<Coincident name="Coincident1">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>BaseLink-1</Uid>
+<Uid>Circular Base-1</Uid>
+</InstancePath>
+<Position>0 0.024999999999999915 0.025000000000000001</Position>
+<Axis>0 -3.4914813388431334e-15 1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>RotatingWasteLink-2</Uid>
+<Uid>Rotating Waste-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric2">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>BaseLink-1</Uid>
+<Uid>Circular Base-1</Uid>
+</InstancePath>
+<Position>0 0.024999999999999915 0.025000000000000001</Position>
+<Axis>0 3.4914813388431334e-15 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>RotatingWasteLink-2</Uid>
+<Uid>Rotating Waste-1</Uid>
+</InstancePath>
+<Position>0 0.005000000000000001 0</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Coincident2">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>RotatingWasteLink-2</Uid>
+<Uid>Rotating Waste-1</Uid>
+</InstancePath>
+<Position>0 0 -0.0025000000000000022</Position>
+<Axis>1.0474260347947961e-14 0 1.0000000000000004</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Arm_1-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 -1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric5">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>RotatingWasteLink-2</Uid>
+<Uid>Servo MG996R-1</Uid>
+</InstancePath>
+<Position>-0.010249999999999995 0.047399999999999998 0</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Arm_1-1</Uid>
+</InstancePath>
+<Position>0.069999999999999979 -0.035355339059327404 0</Position>
+<Axis>0 1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Coincident3">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Arm_1-1</Uid>
+</InstancePath>
+<Position>0 0 0</Position>
+<Axis>0 -1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Arm_2-1</Uid>
+<Uid>Arm 2-1</Uid>
+</InstancePath>
+<Position>-0.07600000000000004 0.012629702407559659 0.012629702407559819</Position>
+<Axis>0 1.0475353124750126e-14 1.0000000000000002</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric6">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Arm_1-1</Uid>
+</InstancePath>
+<Position>-0.070000000000000007 -0.035355339059327404 0</Position>
+<Axis>0 1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Arm_2-1</Uid>
+<Uid>Servo MG996R-1</Uid>
+</InstancePath>
+<Position>-0.010249999999999981 0.047400000000000025 0</Position>
+<Axis>0 -1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Coincident4">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Arm_2-1</Uid>
+<Uid>Arm 2-1</Uid>
+</InstancePath>
+<Position>0.027000000000000024 0.012629702407558764 -0.14183961243058241</Position>
+<Axis>1.0000000000000002 6.9822619908066486e-15 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Arm_3-1</Uid>
+<Uid>Arm 3-1</Uid>
+</InstancePath>
+<Position>0 0 -0.0014999999999999458</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric12">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Arm_2-1</Uid>
+<Uid>Servo Micro-1</Uid>
+</InstancePath>
+<Position>-0.0051000000000000038 0.029899999999999982 0</Position>
+<Axis>0 -1.0000000000000002 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="point">
+<InstancePath>
+<Uid>Arm_3-1</Uid>
+<Uid>Arm 3-1</Uid>
+</InstancePath>
+<Position>0.0051000000005707331 -1.4804407699742228e-12 0</Position>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="Coincident13">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Arm_3-1</Uid>
+<Uid>Arm 3-1</Uid>
+</InstancePath>
+<Position>0 -0.014849999999999999 0</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>Gripper-1</Uid>
+<Uid>Base-1</Uid>
+</InstancePath>
+<Position>0.004315490342120587 0 0.0070000000000000027</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="Concentric10">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Arm_3-1</Uid>
+<Uid>Servo Micro-1</Uid>
+</InstancePath>
+<Position>-0.0050999999999999934 0.029899999999999996 0</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>Gripper-1</Uid>
+<Uid>Base-1</Uid>
+</InstancePath>
+<Position>0 0 0.0069999999999999958</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Concentric>
+</Constraints>
+</RootAssembly>
+<Assemblies>
+<Assembly name="RotatingWasteLink" uid="RotatingWasteLink" version="124">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="RotatingWasteLink.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+<Assembly name="BaseLink" uid="BaseLink" version="108">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="BaseLink.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+<Assembly name="Gripper" uid="Gripper" version="229">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="Gripper.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+<Assembly name="Arm_2" uid="Arm_2" version="121">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="Arm_2.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+<Assembly name="Arm_3" uid="Arm_3" version="112">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<AssemblyFile name="Arm_3.SLDASM" type="SolidWorks Assembly"/>
+</Assembly>
+</Assemblies>
+<Parts>
+<Part name="Arm 2" uid="Arm 2*:*Default" version="2557">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Arm 2.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.080335404973810018</Mass>
+<CenterOfMass>-0.044301030823737542 0.012730203302188646 0.0020508592474980814</CenterOfMass>
+<Inertia>2.125745814669855e-05 0.00010452010849934938 0.0001172265982816088 1.0477131920287355e-08 8.1701872534565871e-07 -2.5423125853984886e-07</Inertia>
+</MassProperties>
+<GeometryFile name="Arm 2_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="0.5" g="0.5" b="0.5" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Arm 3" uid="Arm 3*:*Default" version="2697">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Arm 3.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.020451254914597893</Mass>
+<CenterOfMass>3.7358468133722789e-05 -0.0041032325236279961 0.01844918328502183</CenterOfMass>
+<Inertia>5.095475417757498e-06 6.074343254648823e-06 2.9612438436111673e-06 3.9169160342408994e-07 1.1228103814175668e-08 -3.0202973543223161e-09</Inertia>
+</MassProperties>
+<GeometryFile name="Arm 3_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="0.5" g="0.5" b="0.5" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Arm_1" uid="Arm_1*:*Default" version="748">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Arm_1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.1379847018478447</Mass>
+<CenterOfMass>3.6427036336024948e-06 0.010308467305813647 -3.2059335197869905e-07</CenterOfMass>
+<Inertia>3.0835119656497057e-05 0.00043168332374126782 0.00041292742194235389 3.5028179109484407e-10 -1.184915710667784e-11 -3.3681728276682039e-09</Inertia>
+</MassProperties>
+<GeometryFile name="Arm_1_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="0.5" g="0.5" b="0.5" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Base" uid="Base*:*Default" version="1062">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Base.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.015576159256236224</Mass>
+<CenterOfMass>0.024485056579738183 0.0047924503379828086 -0.001604528251268421</CenterOfMass>
+<Inertia>2.5842316653018666e-06 6.2479155961497742e-06 4.8787428545940354e-06 1.0017148093103258e-08 5.4612472189822576e-07 -8.3085614601083812e-07</Inertia>
+</MassProperties>
+<GeometryFile name="Base_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="0.5" g="0.5" b="0.5" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Circular Base" uid="Circular Base*:*Default" version="757">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Circular Base.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.093991528357273896</Mass>
+<CenterOfMass>0.00088930748628568011 0.025000000151795761 -0.0025740826422795617</CenterOfMass>
+<Inertia>0.00011411747096047216 0.00012442725795815227 0.00019776858898421952 1.9115339056411537e-13 -1.3528430253361193e-06 1.9770438996363347e-13</Inertia>
+</MassProperties>
+<GeometryFile name="Circular Base_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="1" g="1" b="1" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Gear Arm 1" uid="Gear Arm 1*:*Default" version="157">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Gear Arm 1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0039624199269446122</Mass>
+<CenterOfMass>-0.0045275913705687693 0.001 -0.00060196930727362207</CenterOfMass>
+<Inertia>1.4167320068202866e-07 6.7085950123994893e-07 5.5296082011958782e-07 0 -1.3886112733173262e-08 0</Inertia>
+</MassProperties>
+<GeometryFile name="Gear Arm 1_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Gear Arm 2" uid="Gear Arm 2*:*Default" version="343">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Gear Arm 2.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0028244899707033041</Mass>
+<CenterOfMass>-0.017370546750743475 0.0017437179323548234 0.00040231023320767638</CenterOfMass>
+<Inertia>1.0249998648924344e-07 5.4141333132696879e-07 4.4993490963466683e-07 2.1040568313833355e-09 5.8922340817105486e-08 -1.2935612981905613e-08</Inertia>
+</MassProperties>
+<GeometryFile name="Gear Arm 2_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Grip" uid="Grip*:*Default" version="362">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Grip.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0053974701398930717</Mass>
+<CenterOfMass>0.0042500225915138353 0.0095131476517421962 -0.031889976021591902</CenterOfMass>
+<Inertia>1.7139108532223844e-06 1.5958276983903421e-06 1.8307767030588402e-07 3.734118843482188e-07 6.5121955707659528e-12 1.2431071757242153e-11</Inertia>
+</MassProperties>
+<GeometryFile name="Grip_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Link" uid="Link*:*Default" version="141">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Link.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.00079876241318469095</Mass>
+<CenterOfMass>0.015500000000000007 0.002 0</CenterOfMass>
+<Inertia>3.6325042236300993e-09 1.0442422565960369e-07 1.0292175453779942e-07 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="Link_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Diffuse r="0.792156862745098" g="0.81960784313725488" b="0.93333333333333335" a="1"/>
+<Specular r="0.396078431372549" g="0.40980392156862744" b="0.46666666666666667" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Microservo horn" uid="Microservo horn*:*?? ?????????" version="212">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Microservo horn.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0017572412778761883</Mass>
+<CenterOfMass>-0.0039398950097444714 0 0.0018089088135946369</CenterOfMass>
+<Inertia>9.5021927911136879e-09 5.4669651751985114e-08 5.7671077946502153e-08 0 -5.6003557135239668e-09 0</Inertia>
+</MassProperties>
+<GeometryFile name="Microservo horn_?? ?????????_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="0.20000000298023224" g="0.20000000298023224" b="0.20000000298023224" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.20000000298023224</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Rotating Waste" uid="Rotating Waste*:*Default" version="1281">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Rotating Waste.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.089721318791525201</Mass>
+<CenterOfMass>-1.03814223568812e-07 0.01942293478116678 -0.0070575678960388879</CenterOfMass>
+<Inertia>6.6937092739878317e-05 7.069544754939449e-05 7.7272872070026274e-05 7.9679090392684796e-06 -2.7714050222831315e-10 6.6609670610196346e-11</Inertia>
+</MassProperties>
+<GeometryFile name="Rotating Waste_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="1" g="1" b="1" a="1"/>
+<Diffuse r="1" g="1" b="1" a="1"/>
+<Specular r="0.5" g="0.5" b="0.5" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Servo MG996R" uid="Servo MG996R*:*Default" version="649">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Servo MG996R.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.033876630295594158</Mass>
+<CenterOfMass>-0.00049032191241283089 0.020358074512903949 -1.2918440699258237e-09</CenterOfMass>
+<Inertia>5.8478860963115437e-06 6.0267252145453635e-06 9.5874430627169774e-06 6.4718830445865983e-13 1.5672389689302075e-13 2.7277211248685719e-07</Inertia>
+</MassProperties>
+<GeometryFile name="Servo MG996R_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.25098039215686274" g="0.25098039215686274" b="0.25098039215686274" a="1"/>
+<Diffuse r="0.25098039215686274" g="0.25098039215686274" b="0.25098039215686274" a="1"/>
+<Specular r="0.12549019607843137" g="0.12549019607843137" b="0.12549019607843137" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+<Part name="Servo Micro" uid="Servo Micro*:*Default" version="314">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="Servo Micro.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0071285815431194289</Mass>
+<CenterOfMass>-0.00042843487706856729 0.012510643062129501 0</CenterOfMass>
+<Inertia>4.5814644939764358e-07 4.2765081401936342e-07 7.0781861394704572e-07 0 0 3.5781849855651128e-08</Inertia>
+</MassProperties>
+<GeometryFile name="Servo Micro_Default_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.12156862745098039" g="0.25490196078431371" b="1" a="1"/>
+<Diffuse r="0.12156862745098039" g="0.25490196078431371" b="1" a="1"/>
+<Specular r="0.060784313725490195" g="0.12745098039215685" b="0.5" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.40000000596046448</Shininess>
+</VisualProperties>
+</Part>
+</Parts>
+</SimscapeMultibodyImportXML>
